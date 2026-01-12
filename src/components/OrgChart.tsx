@@ -1,51 +1,302 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ZoomableCanvas, HierarchyView } from "@crafter/flow";
 import { team, type TeamMember } from "../data/team";
+
+const FLAG: Record<string, string> = {
+  PE: "🇵🇪",
+  CO: "🇨🇴",
+};
+
+function ProfilePopover({
+  member,
+  isDark,
+  onClose,
+}: {
+  member: TeamMember;
+  isDark: boolean;
+  onClose: () => void;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 200);
+  }, [onClose]);
+
+  useEffect(() => {
+    requestAnimationFrame(() => setIsVisible(true));
+  }, []);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [handleClose]);
+
+  const isAnimating = isVisible && !isClosing;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+      <div
+        className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${
+          isAnimating ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={handleClose}
+      />
+      <div
+        className={`relative z-10 w-[340px] border p-6 transition-all duration-200 ${
+          isAnimating
+            ? "opacity-100 scale-100 translate-y-0"
+            : "opacity-0 scale-95 translate-y-2"
+        } ${
+          isDark
+            ? "bg-[#171717] border-[#333] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)]"
+            : "bg-white border-[#E5E5E5] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]"
+        }`}
+      >
+        <button
+          onClick={handleClose}
+          className={`absolute top-4 right-4 w-7 h-7 flex items-center justify-center transition-all ${
+            isDark
+              ? "hover:bg-[#262626] text-[#737373] hover:text-white"
+              : "hover:bg-[#F5F5F5] text-[#A3A3A3] hover:text-[#0A0A0A]"
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <div className="flex items-center gap-4">
+          {member.avatar && (
+            <div className="relative">
+              <img
+                src={member.avatar}
+                alt={member.name}
+                className="w-[72px] h-[72px] border-2 border-[#FFD800]/30 object-cover"
+              />
+              {member.country && (
+                <span className="absolute -bottom-1 -right-1 text-sm bg-[#171717] px-1 py-0.5 border border-[#333]">
+                  {FLAG[member.country]}
+                </span>
+              )}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h3 className={`font-bold text-lg leading-tight ${isDark ? "text-white" : "text-[#0A0A0A]"}`}>
+              {member.name}
+            </h3>
+            <p className={`text-sm mt-0.5 ${isDark ? "text-[#A3A3A3]" : "text-[#737373]"}`}>
+              {member.role}
+            </p>
+            {member.founderTitle && (
+              <span className={`inline-flex mt-2 px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase ${
+                isDark ? "bg-white text-[#0A0A0A]" : "bg-[#0A0A0A] text-white"
+              }`}>
+                {member.founderTitle}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {member.bio && (
+          <p className={`mt-5 text-sm leading-relaxed ${isDark ? "text-[#A3A3A3]" : "text-[#525252]"}`}>
+            {member.bio}
+          </p>
+        )}
+
+        {(member.github || member.linkedin || member.twitter) && (
+          <div className={`flex gap-2 mt-5 pt-5 border-t ${isDark ? "border-[#333]" : "border-[#E5E5E5]"}`}>
+            {member.github && (
+              <a
+                href={`https://github.com/${member.github}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold transition-all ${
+                  isDark
+                    ? "bg-[#262626] text-white hover:bg-[#333] border border-[#404040]"
+                    : "bg-[#0A0A0A] text-white hover:bg-[#171717]"
+                }`}
+              >
+                <GitHubLogo className="w-4 h-4" />
+                GitHub
+              </a>
+            )}
+            {member.linkedin && (
+              <a
+                href={`https://linkedin.com/in/${member.linkedin}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-semibold bg-[#0A66C2] text-white hover:bg-[#004182] transition-all"
+              >
+                <LinkedInLogo className="w-4 h-4" />
+                LinkedIn
+              </a>
+            )}
+            {member.twitter && (
+              <a
+                href={`https://twitter.com/${member.twitter}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center justify-center px-3 py-2.5 text-xs font-semibold transition-all ${
+                  isDark
+                    ? "bg-[#262626] text-white hover:bg-[#333] border border-[#404040]"
+                    : "bg-[#0A0A0A] text-white hover:bg-[#171717]"
+                }`}
+              >
+                <XLogo className="w-4 h-4" />
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function TeamNode({
   member,
   isDark,
+  onClick,
 }: {
   member: TeamMember;
   isDark: boolean;
+  onClick?: () => void;
 }) {
   const isOrg = member.level === "org";
   const isFounder = member.level === "founder";
+  const isTeam = member.level === "team";
+  const isClickable = !isOrg && !isTeam;
 
-  const baseClasses =
-    "px-5 py-3 rounded-md border-2 transition-all text-center min-w-[120px]";
+  const wrapperClass = isClickable ? "cursor-pointer" : "";
 
-  const darkClasses = isOrg
-    ? "bg-[#FFD800] border-[#FFD800] text-[#0A0A0A]"
-    : isFounder
-      ? "bg-[#171717] border-[#FFD800] text-white"
-      : "bg-[#171717] border-[#262626] text-white hover:border-[#FFD800]/50";
+  if (isOrg) {
+    return (
+      <div className="relative px-6 py-4 bg-[#FFD800] border-2 border-[#FFD800] shadow-lg">
+        <div className="text-center">
+          <div className="text-base font-black tracking-tight text-[#0A0A0A] whitespace-nowrap">
+            CRAFTER STATION
+          </div>
+          <div className="mt-1.5 inline-flex px-2.5 py-0.5 bg-[#0A0A0A]/10 text-[10px] font-medium text-[#0A0A0A]/80">
+            Organization
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const lightClasses = isOrg
-    ? "bg-[#FFD800] border-[#FFD800] text-[#0A0A0A]"
-    : isFounder
-      ? "bg-white border-[#FFD800] text-[#0A0A0A] shadow-sm"
-      : "bg-white border-[#E5E5E5] text-[#0A0A0A] shadow-sm hover:border-[#FFD800]/60";
+  if (isFounder) {
+    return (
+      <div
+        onClick={onClick}
+        className={`relative px-5 py-4 border-2 overflow-hidden ${wrapperClass} ${
+          isDark
+            ? "bg-[#171717] border-[#FFD800] shadow-[0_0_20px_rgba(255,216,0,0.15)] hover:shadow-[0_0_30px_rgba(255,216,0,0.25)]"
+            : "bg-white border-[#FFD800] shadow-lg hover:shadow-xl"
+        } transition-all`}
+      >
+        {member.country && (
+          <span className={`absolute top-0 right-0 text-xs px-1.5 py-0.5 ${
+            isDark
+              ? "bg-[#262626] border-l border-b border-[#404040]"
+              : "bg-[#F5F5F5] border-l border-b border-[#D4D4D4]"
+          }`}>
+            {FLAG[member.country]}
+          </span>
+        )}
+        <div className={`text-center ${member.country ? "pr-4" : ""}`}>
+          <div className={`text-sm font-bold whitespace-nowrap ${isDark ? "text-white" : "text-[#0A0A0A]"}`}>
+            {member.name}
+          </div>
+          <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+            <span className={`inline-flex px-2 py-0.5 text-[10px] font-medium whitespace-nowrap ${
+              isDark
+                ? "bg-[#FFD800]/10 text-[#FFD800] border border-[#FFD800]/20"
+                : "bg-[#FFD800]/20 text-[#996B00] border border-[#FFD800]/40"
+            }`}>
+              {member.role}
+            </span>
+            {member.founderTitle && (
+              <span className={`inline-flex px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap ${
+                isDark ? "bg-white text-[#0A0A0A]" : "bg-[#0A0A0A] text-white"
+              }`}>
+                {member.founderTitle}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isTeam) {
+    return (
+      <div className={`relative px-4 py-3 border ${
+        isDark
+          ? "bg-[#1a1a1a] border-[#404040]"
+          : "bg-[#FAFAFA] border-[#D4D4D4] shadow-sm"
+      }`}>
+        <div className="text-center">
+          <div className={`text-xs font-semibold whitespace-nowrap ${isDark ? "text-white" : "text-[#0A0A0A]"}`}>
+            {member.name}
+          </div>
+          {member.role && (
+            <div className={`mt-1.5 inline-flex px-2 py-0.5 text-[9px] font-medium whitespace-nowrap ${
+              isDark
+                ? "bg-[#262626] text-[#A3A3A3]"
+                : "bg-[#E5E5E5] text-[#525252]"
+            }`}>
+              {member.role}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`${baseClasses} ${isDark ? darkClasses : lightClasses}`}>
-      <div
-        className={`font-black tracking-tight ${isOrg ? "text-base uppercase" : "text-sm font-semibold"}`}
-      >
-        {member.name}
-      </div>
-      <div
-        className={`text-xs mt-1 font-medium ${
+    <div
+      onClick={onClick}
+      className={`relative px-4 py-3 border transition-all overflow-hidden ${wrapperClass} ${
+        isDark
+          ? "bg-[#171717] border-[#333] hover:border-[#FFD800]/50 hover:shadow-[0_0_15px_rgba(255,216,0,0.1)]"
+          : "bg-white border-[#D4D4D4] shadow-sm hover:border-[#FFD800] hover:shadow-md"
+      }`}
+    >
+      {member.country && (
+        <span className={`absolute top-0 right-0 text-[10px] px-1 py-0.5 ${
           isDark
-            ? isOrg
-              ? "text-[#0A0A0A]/70"
-              : "text-[#A3A3A3]"
-            : isOrg
-              ? "text-[#0A0A0A]/70"
-              : "text-[#737373]"
-        }`}
-      >
-        {member.role}
+            ? "bg-[#262626] border-l border-b border-[#404040]"
+            : "bg-[#F5F5F5] border-l border-b border-[#D4D4D4]"
+        }`}>
+          {FLAG[member.country]}
+        </span>
+      )}
+      <div className={`text-center ${member.country ? "pr-3" : ""}`}>
+        <div className={`text-sm font-semibold whitespace-nowrap ${isDark ? "text-white" : "text-[#0A0A0A]"}`}>
+          {member.name}
+        </div>
+        <div className="mt-1.5 flex flex-wrap justify-center gap-1">
+          <span className={`inline-flex px-2 py-0.5 text-[10px] font-medium whitespace-nowrap ${
+            isDark
+              ? "bg-[#FFD800]/10 text-[#FFD800] border border-[#FFD800]/20"
+              : "bg-[#FFD800]/20 text-[#996B00] border border-[#FFD800]/40"
+          }`}>
+            {member.role}
+          </span>
+          {member.founderTitle && (
+            <span className={`inline-flex px-2 py-0.5 text-[9px] font-semibold whitespace-nowrap ${
+              isDark ? "bg-white text-[#0A0A0A]" : "bg-[#0A0A0A] text-white"
+            }`}>
+              {member.founderTitle}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -62,12 +313,12 @@ function ThemeToggle({
     <button
       onClick={onToggle}
       className={`
-        fixed top-5 right-5 z-50 flex items-center gap-2 px-4 py-2 rounded-md
+        fixed top-5 right-5 z-50 flex items-center gap-2 px-4 py-2
         transition-all font-medium text-sm border
         ${
           isDark
-            ? "bg-[#171717] border-[#262626] text-white hover:border-[#FFD800]/50"
-            : "bg-white border-[#E5E5E5] text-[#0A0A0A] hover:border-[#FFD800]/50 shadow-sm"
+            ? "bg-[#171717] border-[#333] text-white hover:border-[#FFD800]/50"
+            : "bg-white border-[#D4D4D4] text-[#0A0A0A] hover:border-[#FFD800] shadow-sm"
         }
       `}
     >
@@ -96,11 +347,7 @@ function ThemeToggle({
 
 function CrafterStationLogo({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 100 100"
-      className={className}
-      fill="currentColor"
-    >
+    <svg viewBox="0 0 100 100" className={className} fill="currentColor">
       <path d="M50 10C27.91 10 10 27.91 10 50s17.91 40 40 40 40-17.91 40-40S72.09 10 50 10zm0 70c-16.57 0-30-13.43-30-30s13.43-30 30-30 30 13.43 30 30-13.43 30-30 30z" />
       <path d="M50 30c-11.05 0-20 8.95-20 20s8.95 20 20 20 20-8.95 20-20-8.95-20-20-20zm0 30c-5.52 0-10-4.48-10-10s4.48-10 10-10 10 4.48 10 10-4.48 10-10 10z" />
       <circle cx="50" cy="50" r="5" />
@@ -110,13 +357,24 @@ function CrafterStationLogo({ className }: { className?: string }) {
 
 function GitHubLogo({ className }: { className?: string }) {
   return (
-    <svg
-      role="img"
-      viewBox="0 0 97.6 96"
-      className={className}
-      fill="currentColor"
-    >
-      <path d="M48.9,0C21.8,0,0,22,0,49.2C0,71,14,89.4,33.4,95.9c2.4,0.5,3.3-1.1,3.3-2.4c0-1.1-0.1-5.1-0.1-9.1c-13.6,2.9-16.4-5.9-16.4-5.9c-2.2-5.7-5.4-7.2-5.4-7.2c-4.4-3,0.3-3,0.3-3c4.9,0.3,7.5,5.1,7.5,5.1c4.4,7.5,11.4,5.4,14.2,4.1c0.4-3.2,1.7-5.4,3.1-6.6c-10.8-1.1-22.2-5.4-22.2-24.3c0-5.4,1.9-9.8,5-13.2c-0.5-1.2-2.2-6.3,0.5-13c0,0,4.1-1.3,13.4,5.1c3.9-1.1,8.1-1.6,12.2-1.6s8.3,0.6,12.2,1.6c9.3-6.4,13.4-5.1,13.4-5.1c2.7,6.8,1,11.8,0.5,13c3.2,3.4,5,7.8,5,13.2c0,18.9-11.4,23.1-22.3,24.3c1.8,1.5,3.3,4.5,3.3,9.1c0,6.6-0.1,11.9-0.1,13.5c0,1.3,0.9,2.9,3.3,2.4C83.6,89.4,97.6,71,97.6,49.2C97.7,22,75.8,0,48.9,0z" />
+    <svg role="img" viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+    </svg>
+  );
+}
+
+function LinkedInLogo({ className }: { className?: string }) {
+  return (
+    <svg role="img" viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+    </svg>
+  );
+}
+
+function XLogo({ className }: { className?: string }) {
+  return (
+    <svg role="img" viewBox="0 0 24 24" className={className} fill="currentColor">
+      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
     </svg>
   );
 }
@@ -125,8 +383,8 @@ function Header({ isDark }: { isDark: boolean }) {
   return (
     <div className="fixed top-5 left-5 z-50 flex items-center gap-3">
       <div
-        className={`w-10 h-10 rounded-md flex items-center justify-center ${
-          isDark ? "bg-[#171717] border border-[#262626]" : "bg-white border border-[#E5E5E5] shadow-sm"
+        className={`w-10 h-10 flex items-center justify-center ${
+          isDark ? "bg-[#171717] border border-[#333]" : "bg-white border border-[#D4D4D4] shadow-sm"
         }`}
       >
         <CrafterStationLogo className="w-6 h-6 text-[#FFD800]" />
@@ -150,12 +408,12 @@ function BuiltWithBadge({ isDark }: { isDark: boolean }) {
       target="_blank"
       rel="noopener noreferrer"
       className={`
-        fixed bottom-5 right-5 z-50 flex items-center gap-2 px-3 py-2 rounded-md
+        fixed bottom-5 right-5 z-50 flex items-center gap-2 px-3 py-2
         transition-all text-xs font-medium border
         ${
           isDark
-            ? "bg-[#171717] border-[#262626] text-[#A3A3A3] hover:border-[#FFD800]/50 hover:text-white"
-            : "bg-white border-[#E5E5E5] text-[#737373] hover:border-[#FFD800]/50 hover:text-[#0A0A0A] shadow-sm"
+            ? "bg-[#171717] border-[#333] text-[#A3A3A3] hover:border-[#FFD800]/50 hover:text-white"
+            : "bg-white border-[#D4D4D4] text-[#737373] hover:border-[#FFD800] hover:text-[#0A0A0A] shadow-sm"
         }
       `}
     >
@@ -168,6 +426,7 @@ function BuiltWithBadge({ isDark }: { isDark: boolean }) {
 
 export function OrgChart() {
   const [isDark, setIsDark] = useState(true);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
 
   return (
     <div
@@ -179,24 +438,44 @@ export function OrgChart() {
       <ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
       <BuiltWithBadge isDark={isDark} />
 
+      {selectedMember && (
+        <ProfilePopover
+          member={selectedMember}
+          isDark={isDark}
+          onClose={() => setSelectedMember(null)}
+        />
+      )}
+
       <ZoomableCanvas
         backgroundColor={isDark ? "#0A0A0A" : "#F5F5F5"}
-        dotColor={isDark ? "rgba(255, 216, 0, 0.08)" : "rgba(255, 216, 0, 0.2)"}
+        dotColor={isDark ? "rgba(255, 216, 0, 0.08)" : "rgba(0, 0, 0, 0.1)"}
         gridSpacing={24}
-        minZoom={0.3}
+        minZoom={0.2}
         maxZoom={2}
       >
         <HierarchyView<TeamMember>
           data={team}
-          config={{ direction: "vertical" }}
+          config={{ direction: "horizontal" }}
           nodeSize={(node) => {
-            if (node.level === "org") return { width: 180, height: 68 };
-            if (node.level === "founder") return { width: 160, height: 62 };
-            return { width: 130, height: 56 };
+            if (node.level === "org") return { width: 180, height: 75 };
+            if (node.level === "founder") return { width: 200, height: 90 };
+            if (node.level === "team") return { width: 130, height: 55 };
+            if (node.founderTitle) return { width: 175, height: 75 };
+            return { width: 155, height: 70 };
           }}
-          gap={{ x: 20, y: 70 }}
-          edgeColor={isDark ? "rgba(255, 216, 0, 0.4)" : "rgba(255, 216, 0, 0.6)"}
-          renderNode={(node) => <TeamNode member={node} isDark={isDark} />}
+          gap={{ x: 35, y: 45 }}
+          edgeColor={isDark ? "rgba(255, 216, 0, 0.5)" : "rgba(0, 0, 0, 0.25)"}
+          renderNode={(node) => (
+            <TeamNode
+              member={node}
+              isDark={isDark}
+              onClick={
+                node.level !== "org" && node.level !== "team"
+                  ? () => setSelectedMember(node)
+                  : undefined
+              }
+            />
+          )}
         />
       </ZoomableCanvas>
     </div>
