@@ -94,6 +94,33 @@ function ThemeToggle({
   );
 }
 
+function CrafterStationLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      className={className}
+      fill="currentColor"
+    >
+      <path d="M50 10C27.91 10 10 27.91 10 50s17.91 40 40 40 40-17.91 40-40S72.09 10 50 10zm0 70c-16.57 0-30-13.43-30-30s13.43-30 30-30 30 13.43 30 30-13.43 30-30 30z" />
+      <path d="M50 30c-11.05 0-20 8.95-20 20s8.95 20 20 20 20-8.95 20-20-8.95-20-20-20zm0 30c-5.52 0-10-4.48-10-10s4.48-10 10-10 10 4.48 10 10-4.48 10-10 10z" />
+      <circle cx="50" cy="50" r="5" />
+    </svg>
+  );
+}
+
+function GitHubLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      role="img"
+      viewBox="0 0 97.6 96"
+      className={className}
+      fill="currentColor"
+    >
+      <path d="M48.9,0C21.8,0,0,22,0,49.2C0,71,14,89.4,33.4,95.9c2.4,0.5,3.3-1.1,3.3-2.4c0-1.1-0.1-5.1-0.1-9.1c-13.6,2.9-16.4-5.9-16.4-5.9c-2.2-5.7-5.4-7.2-5.4-7.2c-4.4-3,0.3-3,0.3-3c4.9,0.3,7.5,5.1,7.5,5.1c4.4,7.5,11.4,5.4,14.2,4.1c0.4-3.2,1.7-5.4,3.1-6.6c-10.8-1.1-22.2-5.4-22.2-24.3c0-5.4,1.9-9.8,5-13.2c-0.5-1.2-2.2-6.3,0.5-13c0,0,4.1-1.3,13.4,5.1c3.9-1.1,8.1-1.6,12.2-1.6s8.3,0.6,12.2,1.6c9.3-6.4,13.4-5.1,13.4-5.1c2.7,6.8,1,11.8,0.5,13c3.2,3.4,5,7.8,5,13.2c0,18.9-11.4,23.1-22.3,24.3c1.8,1.5,3.3,4.5,3.3,9.1c0,6.6-0.1,11.9-0.1,13.5c0,1.3,0.9,2.9,3.3,2.4C83.6,89.4,97.6,71,97.6,49.2C97.7,22,75.8,0,48.9,0z" />
+    </svg>
+  );
+}
+
 function Header({ isDark }: { isDark: boolean }) {
   return (
     <div className="fixed top-5 left-5 z-50 flex items-center gap-3">
@@ -102,13 +129,7 @@ function Header({ isDark }: { isDark: boolean }) {
           isDark ? "bg-[#171717] border border-[#262626]" : "bg-white border border-[#E5E5E5] shadow-sm"
         }`}
       >
-        <svg
-          viewBox="0 0 24 24"
-          className="w-6 h-6 text-[#FFD800]"
-          fill="currentColor"
-        >
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
-        </svg>
+        <CrafterStationLogo className="w-6 h-6 text-[#FFD800]" />
       </div>
       <div>
         <div className={`font-black text-sm tracking-tight ${isDark ? "text-white" : "text-[#0A0A0A]"}`}>
@@ -119,6 +140,29 @@ function Header({ isDark }: { isDark: boolean }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function BuiltWithBadge({ isDark }: { isDark: boolean }) {
+  return (
+    <a
+      href="https://github.com/crafter-station/flow"
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`
+        fixed bottom-5 right-5 z-50 flex items-center gap-2 px-3 py-2 rounded-md
+        transition-all text-xs font-medium border
+        ${
+          isDark
+            ? "bg-[#171717] border-[#262626] text-[#A3A3A3] hover:border-[#FFD800]/50 hover:text-white"
+            : "bg-white border-[#E5E5E5] text-[#737373] hover:border-[#FFD800]/50 hover:text-[#0A0A0A] shadow-sm"
+        }
+      `}
+    >
+      <GitHubLogo className={`w-4 h-4 ${isDark ? "text-white" : "text-[#0A0A0A]"}`} />
+      <span>Built with</span>
+      <span className="text-[#FFD800] font-semibold">@crafter/flow</span>
+    </a>
   );
 }
 
@@ -133,6 +177,7 @@ export function OrgChart() {
     >
       <Header isDark={isDark} />
       <ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
+      <BuiltWithBadge isDark={isDark} />
 
       <ZoomableCanvas
         backgroundColor={isDark ? "#0A0A0A" : "#F5F5F5"}
