@@ -5,6 +5,7 @@ import { type TeamMember, team } from "../data/team";
 const FLAG: Record<string, string> = {
 	PE: "🇵🇪",
 	CO: "🇨🇴",
+	CN: "🇨🇳",
 };
 
 function ProfilePopover({
@@ -128,6 +129,30 @@ function ProfilePopover({
 					</p>
 				)}
 
+				{member.areas && member.areas.length > 0 && (
+					<div className="mt-4">
+						<div
+							className={`text-[10px] font-bold uppercase tracking-wide ${isDark ? "text-[#737373]" : "text-[#A3A3A3]"}`}
+						>
+							Ownership
+						</div>
+						<div className="flex flex-wrap gap-1.5 mt-2">
+							{member.areas.map((area) => (
+								<span
+									key={area}
+									className={`inline-flex px-2 py-1 text-[11px] font-semibold ${
+										isDark
+											? "bg-[#FFD800]/10 text-[#FFD800] border border-[#FFD800]/20"
+											: "bg-[#FFD800]/20 text-[#996B00] border border-[#FFD800]/40"
+									}`}
+								>
+									{area}
+								</span>
+							))}
+						</div>
+					</div>
+				)}
+
 				{(member.github || member.linkedin || member.twitter) && (
 					<div
 						className={`flex gap-2 mt-5 pt-5 border-t ${isDark ? "border-[#333]" : "border-[#E5E5E5]"}`}
@@ -190,8 +215,8 @@ function TeamNode({
 }) {
 	const isOrg = member.level === "org";
 	const isFounder = member.level === "founder";
-	const isTeam = member.level === "team";
-	const isClickable = !isOrg && !isTeam;
+	const isArea = member.level === "area";
+	const isClickable = !isOrg && !isArea && !member.vacant;
 
 	const wrapperClass = isClickable ? "cursor-pointer" : "";
 
@@ -262,32 +287,59 @@ function TeamNode({
 		);
 	}
 
-	if (isTeam) {
+	if (isArea) {
 		return (
 			<div
-				className={`relative p-3 border ${
+				className={`relative p-3 border-l-2 border-[#FFD800] border-y border-r ${
 					isDark
-						? "bg-[#1a1a1a] border-[#404040]"
-						: "bg-[#FAFAFA] border-[#D4D4D4] shadow-sm"
+						? "bg-[#1a1a1a] border-y-[#404040] border-r-[#404040]"
+						: "bg-[#FAFAFA] border-y-[#D4D4D4] border-r-[#D4D4D4] shadow-sm"
 				}`}
 			>
 				<div className="text-center">
 					<div
-						className={`text-xs font-semibold whitespace-nowrap ${isDark ? "text-white" : "text-[#0A0A0A]"}`}
+						className={`text-xs font-bold whitespace-nowrap ${isDark ? "text-white" : "text-[#0A0A0A]"}`}
 					>
 						{member.name}
 					</div>
 					{member.role && (
 						<div
-							className={`mt-1.5 inline-flex px-2 py-0.5 text-[9px] font-medium whitespace-nowrap ${
-								isDark
-									? "bg-[#262626] text-[#A3A3A3]"
-									: "bg-[#E5E5E5] text-[#525252]"
+							className={`mt-1 text-[9px] font-medium whitespace-nowrap ${
+								isDark ? "text-[#737373]" : "text-[#737373]"
 							}`}
 						>
 							{member.role}
 						</div>
 					)}
+				</div>
+			</div>
+		);
+	}
+
+	if (member.vacant) {
+		return (
+			<div
+				className={`relative p-4 border border-dashed ${
+					isDark
+						? "bg-transparent border-[#404040]"
+						: "bg-transparent border-[#D4D4D4]"
+				}`}
+			>
+				<div className="text-center">
+					<div
+						className={`text-sm font-semibold whitespace-nowrap ${isDark ? "text-[#737373]" : "text-[#A3A3A3]"}`}
+					>
+						{member.name}
+					</div>
+					<div
+						className={`mt-1.5 inline-flex px-2 py-0.5 text-[10px] font-medium whitespace-nowrap ${
+							isDark
+								? "bg-[#262626] text-[#737373] border border-[#404040]"
+								: "bg-[#F5F5F5] text-[#A3A3A3] border border-[#D4D4D4]"
+						}`}
+					>
+						{member.role}
+					</div>
 				</div>
 			</div>
 		);
@@ -463,9 +515,23 @@ function Header({ isDark }: { isDark: boolean }) {
 				<div
 					className={`text-xs ${isDark ? "text-[#A3A3A3]" : "text-[#737373]"}`}
 				>
-					Team Organization
+					Áreas y ownership
 				</div>
 			</div>
+		</div>
+	);
+}
+
+function NavHint({ isDark }: { isDark: boolean }) {
+	return (
+		<div
+			className={`fixed bottom-5 left-5 z-50 px-3 py-2 text-xs border ${
+				isDark
+					? "bg-[#171717] border-[#333] text-[#737373]"
+					: "bg-white border-[#D4D4D4] text-[#A3A3A3] shadow-sm"
+			}`}
+		>
+			Arrastra para moverte · Scroll para zoom
 		</div>
 	);
 }
@@ -508,6 +574,7 @@ export function OrgChart() {
 			<Header isDark={isDark} />
 			<ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
 			<BuiltWithBadge isDark={isDark} />
+			<NavHint isDark={isDark} />
 
 			{selectedMember && (
 				<ProfilePopover
@@ -523,6 +590,7 @@ export function OrgChart() {
 				gridSpacing={24}
 				minZoom={0.2}
 				maxZoom={2}
+				initialZoom={0.65}
 			>
 				<HierarchyView<TeamMember>
 					data={team}
@@ -530,18 +598,18 @@ export function OrgChart() {
 					nodeSize={(node) => {
 						if (node.level === "org") return { width: 180, height: 75 };
 						if (node.level === "founder") return { width: 200, height: 90 };
-						if (node.level === "team") return { width: 130, height: 55 };
+						if (node.level === "area") return { width: 210, height: 60 };
 						if (node.founderTitle) return { width: 175, height: 75 };
-						return { width: 155, height: 70 };
+						return { width: 165, height: 70 };
 					}}
-					gap={{ x: 35, y: 45 }}
+					gap={{ x: 18, y: 45 }}
 					edgeColor={isDark ? "rgba(255, 216, 0, 0.5)" : "rgba(0, 0, 0, 0.25)"}
 					renderNode={(node) => (
 						<TeamNode
 							member={node}
 							isDark={isDark}
 							onClick={
-								node.level !== "org" && node.level !== "team"
+								node.level !== "org" && node.level !== "area" && !node.vacant
 									? () => setSelectedMember(node)
 									: undefined
 							}
