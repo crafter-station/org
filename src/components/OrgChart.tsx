@@ -1,12 +1,23 @@
 import { HierarchyView, ZoomableCanvas } from "@crafter/flow";
 import { useCallback, useEffect, useState } from "react";
 import { type TeamMember, team } from "../data/team";
+import { OrgList } from "./OrgList";
 
 const FLAG: Record<string, string> = {
 	PE: "🇵🇪",
 	CO: "🇨🇴",
 	CN: "🇨🇳",
 };
+
+function initials(name: string) {
+	return name
+		.split(" ")
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((w) => w[0])
+		.join("")
+		.toUpperCase();
+}
 
 function ProfilePopover({
 	member,
@@ -109,13 +120,13 @@ function ProfilePopover({
 						>
 							{member.role}
 						</p>
-						{member.founderTitle && (
+						{member.founder && (
 							<span
 								className={`inline-flex mt-2 px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase ${
-									isDark ? "bg-white text-[#0A0A0A]" : "bg-[#0A0A0A] text-white"
+									isDark ? "bg-[#FFD800] text-[#0A0A0A]" : "bg-[#0A0A0A] text-[#FFD800]"
 								}`}
 							>
-								{member.founderTitle}
+								Founder
 							</span>
 						)}
 					</div>
@@ -214,9 +225,9 @@ function TeamNode({
 	onClick?: () => void;
 }) {
 	const isOrg = member.level === "org";
-	const isFounder = member.level === "founder";
+	const isCluster = member.level === "cluster";
 	const isArea = member.level === "area";
-	const isClickable = !isOrg && !isArea && !member.vacant;
+	const isClickable = !isOrg && !isArea && !isCluster && !member.vacant;
 
 	const wrapperClass = isClickable ? "cursor-pointer" : "";
 
@@ -235,54 +246,18 @@ function TeamNode({
 		);
 	}
 
-	if (isFounder) {
+	if (isCluster) {
 		return (
-			<div
-				onClick={onClick}
-				className={`relative p-4 border-2 overflow-hidden ${wrapperClass} ${
-					isDark
-						? "bg-[#171717] border-[#FFD800] shadow-[0_0_20px_rgba(255,216,0,0.15)] hover:shadow-[0_0_30px_rgba(255,216,0,0.25)]"
-						: "bg-white border-[#FFD800] shadow-lg hover:shadow-xl"
-				} transition-all`}
-			>
-				{member.country && (
-					<span
-						className={`absolute top-0 right-0 text-xs px-1.5 py-0.5 ${
-							isDark
-								? "bg-[#262626] border-l border-b border-[#404040]"
-								: "bg-[#F5F5F5] border-l border-b border-[#D4D4D4]"
-						}`}
-					>
-						{FLAG[member.country]}
-					</span>
-				)}
-				<div className="text-center">
-					<div
-						className={`text-sm font-bold whitespace-nowrap ${isDark ? "text-white" : "text-[#0A0A0A]"}`}
-					>
-						{member.name}
-					</div>
-					<div className="mt-2 flex flex-wrap justify-center gap-1.5">
-						<span
-							className={`inline-flex px-2 py-0.5 text-[10px] font-medium whitespace-nowrap ${
-								isDark
-									? "bg-[#FFD800]/10 text-[#FFD800] border border-[#FFD800]/20"
-									: "bg-[#FFD800]/20 text-[#996B00] border border-[#FFD800]/40"
-							}`}
-						>
-							{member.role}
-						</span>
-						{member.founderTitle && (
-							<span
-								className={`inline-flex px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap ${
-									isDark ? "bg-white text-[#0A0A0A]" : "bg-[#0A0A0A] text-white"
-								}`}
-							>
-								{member.founderTitle}
-							</span>
-						)}
-					</div>
-				</div>
+			<div className="relative w-full h-full flex items-center justify-center">
+				<span
+					className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-dashed ${
+						isDark
+							? "bg-[#FFD800]/[0.06] text-[#FFD800]/80 border-[#FFD800]/30"
+							: "bg-[#FFD800]/[0.08] text-[#996B00] border-[#996B00]/30"
+					}`}
+				>
+					{member.name}
+				</span>
 			</div>
 		);
 	}
@@ -319,24 +294,29 @@ function TeamNode({
 	if (member.vacant) {
 		return (
 			<div
-				className={`relative p-4 border border-dashed ${
+				className={`relative h-full flex items-center gap-2.5 p-2.5 border border-dashed ${
 					isDark
 						? "bg-transparent border-[#404040]"
 						: "bg-transparent border-[#D4D4D4]"
 				}`}
 			>
-				<div className="text-center">
+				<div
+					className={`w-9 h-9 shrink-0 border border-dashed flex items-center justify-center text-base ${
+						isDark
+							? "border-[#404040] text-[#404040]"
+							: "border-[#D4D4D4] text-[#D4D4D4]"
+					}`}
+				>
+					+
+				</div>
+				<div className="min-w-0 text-left">
 					<div
-						className={`text-sm font-semibold whitespace-nowrap ${isDark ? "text-[#737373]" : "text-[#A3A3A3]"}`}
+						className={`text-[13px] font-semibold leading-tight ${isDark ? "text-[#737373]" : "text-[#A3A3A3]"}`}
 					>
 						{member.name}
 					</div>
 					<div
-						className={`mt-1.5 inline-flex px-2 py-0.5 text-[10px] font-medium whitespace-nowrap ${
-							isDark
-								? "bg-[#262626] text-[#737373] border border-[#404040]"
-								: "bg-[#F5F5F5] text-[#A3A3A3] border border-[#D4D4D4]"
-						}`}
+						className={`text-[10px] leading-tight mt-0.5 ${isDark ? "text-[#525252]" : "text-[#A3A3A3]"}`}
 					>
 						{member.role}
 					</div>
@@ -348,49 +328,66 @@ function TeamNode({
 	return (
 		<div
 			onClick={onClick}
-			className={`relative p-4 border transition-all overflow-hidden ${wrapperClass} ${
-				isDark
-					? "bg-[#171717] border-[#333] hover:border-[#FFD800]/50 hover:shadow-[0_0_15px_rgba(255,216,0,0.1)]"
-					: "bg-white border-[#D4D4D4] shadow-sm hover:border-[#FFD800] hover:shadow-md"
+			className={`relative h-full flex items-center gap-2.5 p-2.5 border transition-all overflow-hidden ${wrapperClass} ${
+				member.unknown
+					? isDark
+						? "bg-[#171717] border-dashed border-[#404040] hover:border-[#FFD800]/40"
+						: "bg-white border-dashed border-[#D4D4D4] hover:border-[#FFD800]"
+					: isDark
+						? "bg-[#171717] border-[#333] hover:border-[#FFD800]/50 hover:shadow-[0_0_15px_rgba(255,216,0,0.1)]"
+						: "bg-white border-[#D4D4D4] shadow-sm hover:border-[#FFD800] hover:shadow-md"
 			}`}
 		>
+			<div
+				className={`relative flex-none overflow-hidden flex items-center justify-center ${
+					member.founder
+						? "border-2 border-[#FFD800]"
+						: isDark
+							? "border border-[#333]"
+							: "border border-[#D4D4D4]"
+				} ${isDark ? "bg-[#262626]" : "bg-[#F5F5F5]"}`}
+				style={{ width: 36, height: 36 }}
+			>
+				{member.avatar ? (
+					<img
+						src={member.avatar}
+						alt={member.name}
+						style={{ width: 36, height: 36 }}
+						className="object-cover"
+					/>
+				) : (
+					<span
+						className={`text-[11px] font-bold ${isDark ? "text-[#737373]" : "text-[#A3A3A3]"}`}
+					>
+						{initials(member.name)}
+					</span>
+				)}
+			</div>
 			{member.country && (
-				<span
-					className={`absolute top-0 right-0 text-[10px] px-1 py-0.5 ${
-						isDark
-							? "bg-[#262626] border-l border-b border-[#404040]"
-							: "bg-[#F5F5F5] border-l border-b border-[#D4D4D4]"
-					}`}
-				>
+				<span className="absolute top-1 right-1 text-[10px] leading-none">
 					{FLAG[member.country]}
 				</span>
 			)}
-			<div className="text-center">
+			<div className="min-w-0 text-left">
 				<div
-					className={`text-sm font-semibold whitespace-nowrap ${isDark ? "text-white" : "text-[#0A0A0A]"}`}
+					className={`text-[13px] font-semibold leading-tight truncate ${isDark ? "text-white" : "text-[#0A0A0A]"}`}
 				>
 					{member.name}
 				</div>
-				<div className="mt-1.5 flex flex-wrap justify-center gap-1">
+				<div
+					className={`text-[10px] leading-tight truncate mt-0.5 ${isDark ? "text-[#737373]" : "text-[#737373]"}`}
+				>
+					{member.role}
+				</div>
+				{member.founder && (
 					<span
-						className={`inline-flex px-2 py-0.5 text-[10px] font-medium whitespace-nowrap ${
-							isDark
-								? "bg-[#FFD800]/10 text-[#FFD800] border border-[#FFD800]/20"
-								: "bg-[#FFD800]/20 text-[#996B00] border border-[#FFD800]/40"
+						className={`inline-flex mt-1 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide ${
+							isDark ? "bg-[#FFD800] text-[#0A0A0A]" : "bg-[#0A0A0A] text-[#FFD800]"
 						}`}
 					>
-						{member.role}
+						Founder
 					</span>
-					{member.founderTitle && (
-						<span
-							className={`inline-flex px-2 py-0.5 text-[9px] font-semibold whitespace-nowrap ${
-								isDark ? "bg-white text-[#0A0A0A]" : "bg-[#0A0A0A] text-white"
-							}`}
-						>
-							{member.founderTitle}
-						</span>
-					)}
-				</div>
+				)}
 			</div>
 		</div>
 	);
@@ -494,9 +491,21 @@ function XLogo({ className }: { className?: string }) {
 	);
 }
 
-function Header({ isDark }: { isDark: boolean }) {
+function Header({
+	isDark,
+	compact = false,
+}: {
+	isDark: boolean;
+	compact?: boolean;
+}) {
 	return (
-		<div className="fixed top-5 left-5 z-50 flex items-center gap-3">
+		<div
+			className={`fixed top-0 left-0 z-50 flex items-center gap-3 p-5 ${
+				compact
+					? `right-0 ${isDark ? "bg-[#0A0A0A]" : "bg-[#F5F5F5]"} border-b ${isDark ? "border-[#222]" : "border-[#E5E5E5]"}`
+					: ""
+			}`}
+		>
 			<div
 				className={`w-10 h-10 flex items-center justify-center ${
 					isDark
@@ -561,9 +570,51 @@ function BuiltWithBadge({ isDark }: { isDark: boolean }) {
 	);
 }
 
+function useIsCompact(breakpoint = 1024) {
+	const [isCompact, setIsCompact] = useState(
+		() =>
+			typeof window !== "undefined" &&
+			window.matchMedia(`(max-width: ${breakpoint - 1}px)`).matches,
+	);
+
+	useEffect(() => {
+		const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+		const onChange = (e: MediaQueryListEvent) => setIsCompact(e.matches);
+		mql.addEventListener("change", onChange);
+		setIsCompact(mql.matches);
+		return () => mql.removeEventListener("change", onChange);
+	}, [breakpoint]);
+
+	return isCompact;
+}
+
 export function OrgChart() {
 	const [isDark, setIsDark] = useState(true);
 	const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+	const isCompact = useIsCompact();
+
+	if (isCompact) {
+		return (
+			<div
+				className={`w-full min-h-screen transition-colors duration-200 ${
+					isDark ? "bg-[#0A0A0A]" : "bg-[#F5F5F5]"
+				}`}
+			>
+				<Header isDark={isDark} compact />
+				<ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
+
+				{selectedMember && (
+					<ProfilePopover
+						member={selectedMember}
+						isDark={isDark}
+						onClose={() => setSelectedMember(null)}
+					/>
+				)}
+
+				<OrgList team={team} isDark={isDark} onSelect={setSelectedMember} />
+			</div>
+		);
+	}
 
 	return (
 		<div
@@ -597,19 +648,18 @@ export function OrgChart() {
 					config={{ direction: "horizontal" }}
 					nodeSize={(node) => {
 						if (node.level === "org") return { width: 180, height: 75 };
-						if (node.level === "founder") return { width: 200, height: 90 };
-						if (node.level === "area") return { width: 210, height: 60 };
-						if (node.founderTitle) return { width: 175, height: 75 };
-						return { width: 165, height: 70 };
+						if (node.level === "cluster") return { width: 200, height: 36 };
+						if (node.level === "area") return { width: 210, height: 58 };
+						return { width: 185, height: 62 };
 					}}
-					gap={{ x: 18, y: 45 }}
+					gap={{ x: 14, y: 40 }}
 					edgeColor={isDark ? "rgba(255, 216, 0, 0.5)" : "rgba(0, 0, 0, 0.25)"}
 					renderNode={(node) => (
 						<TeamNode
 							member={node}
 							isDark={isDark}
 							onClick={
-								node.level !== "org" && node.level !== "area" && !node.vacant
+								node.level === "member" && !node.vacant
 									? () => setSelectedMember(node)
 									: undefined
 							}
