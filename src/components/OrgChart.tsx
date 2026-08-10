@@ -1,12 +1,19 @@
 import { HierarchyView, ZoomableCanvas } from "@crafter/flow";
 import { useCallback, useEffect, useState } from "react";
-import { type TeamMember, team } from "../data/team";
+import {
+	CLUSTER_COLOR,
+	CLUSTER_LABEL,
+	type Cluster,
+	type TeamMember,
+	team,
+} from "../data/team";
 import { OrgList } from "./OrgList";
 
 const FLAG: Record<string, string> = {
 	PE: "🇵🇪",
 	CO: "🇨🇴",
 	CN: "🇨🇳",
+	BR: "🇧🇷",
 };
 
 function initials(name: string) {
@@ -100,7 +107,12 @@ function ProfilePopover({
 							<img
 								src={member.avatar}
 								alt={member.name}
-								className="w-[72px] h-[72px] border-2 border-[#FFD800]/30 object-cover"
+								className="w-[72px] h-[72px] rounded-full object-cover"
+								style={{
+									boxShadow: member.founder
+										? "0 0 0 2px #FFD800"
+										: "0 0 0 1px rgba(128,128,128,0.3)",
+								}}
 							/>
 							{member.country && (
 								<span className="absolute -bottom-1 -right-1 text-sm bg-[#171717] px-1 py-0.5 border border-[#333]">
@@ -225,9 +237,8 @@ function TeamNode({
 	onClick?: () => void;
 }) {
 	const isOrg = member.level === "org";
-	const isCluster = member.level === "cluster";
 	const isArea = member.level === "area";
-	const isClickable = !isOrg && !isArea && !isCluster && !member.vacant;
+	const isClickable = !isOrg && !isArea && !member.vacant;
 
 	const wrapperClass = isClickable ? "cursor-pointer" : "";
 
@@ -246,47 +257,33 @@ function TeamNode({
 		);
 	}
 
-	if (isCluster) {
-		return (
-			<div className="relative w-full h-full flex items-center justify-center">
-				<span
-					className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-dashed ${
-						isDark
-							? "bg-[#FFD800]/[0.06] text-[#FFD800]/80 border-[#FFD800]/30"
-							: "bg-[#FFD800]/[0.08] text-[#996B00] border-[#996B00]/30"
-					}`}
-				>
-					{member.name}
-				</span>
-			</div>
-		);
-	}
-
 	if (isArea) {
+		const accent = member.cluster
+			? CLUSTER_COLOR[member.cluster]
+			: "#FFD800";
 		return (
 			<div
-				className={`relative p-3 border-l-2 border-[#FFD800] border-y border-r ${
+				className={`relative h-full px-3 py-2 flex flex-col justify-center border ${
 					isDark
-						? "bg-[#1a1a1a] border-y-[#404040] border-r-[#404040]"
-						: "bg-[#FAFAFA] border-y-[#D4D4D4] border-r-[#D4D4D4] shadow-sm"
+						? "bg-[#141414] border-[#2A2A2A]"
+						: "bg-white border-[#E5E5E5] shadow-sm"
 				}`}
+				style={{ borderLeft: `6px solid ${accent}` }}
 			>
-				<div className="text-center">
-					<div
-						className={`text-xs font-bold whitespace-nowrap ${isDark ? "text-white" : "text-[#0A0A0A]"}`}
-					>
-						{member.name}
-					</div>
-					{member.role && (
-						<div
-							className={`mt-1 text-[9px] font-medium whitespace-nowrap ${
-								isDark ? "text-[#737373]" : "text-[#737373]"
-							}`}
-						>
-							{member.role}
-						</div>
-					)}
+				<div
+					className={`text-[13px] font-bold leading-tight truncate ${isDark ? "text-white" : "text-[#0A0A0A]"}`}
+				>
+					{member.name}
 				</div>
+				{member.role && (
+					<div
+						className={`mt-0.5 text-[9.5px] leading-tight truncate ${
+							isDark ? "text-[#6B6B6B]" : "text-[#8A8A8A]"
+						}`}
+					>
+						{member.role}
+					</div>
+				)}
 			</div>
 		);
 	}
@@ -328,67 +325,68 @@ function TeamNode({
 	return (
 		<div
 			onClick={onClick}
-			className={`relative h-full flex items-center gap-2.5 p-2.5 border transition-all overflow-hidden ${wrapperClass} ${
+			className={`relative h-full w-full flex items-center gap-2 px-2.5 border transition-all ${wrapperClass} ${
 				member.unknown
 					? isDark
-						? "bg-[#171717] border-dashed border-[#404040] hover:border-[#FFD800]/40"
+						? "bg-[#111] border-dashed border-[#333] hover:border-[#FFD800]/40"
 						: "bg-white border-dashed border-[#D4D4D4] hover:border-[#FFD800]"
 					: isDark
-						? "bg-[#171717] border-[#333] hover:border-[#FFD800]/50 hover:shadow-[0_0_15px_rgba(255,216,0,0.1)]"
-						: "bg-white border-[#D4D4D4] shadow-sm hover:border-[#FFD800] hover:shadow-md"
+						? "bg-[#141414] border-[#2A2A2A] hover:border-[#FFD800]/50"
+						: "bg-white border-[#E5E5E5] shadow-sm hover:border-[#FFD800]"
 			}`}
 		>
 			<div
-				className={`relative flex-none overflow-hidden flex items-center justify-center ${
-					member.founder
-						? "border-2 border-[#FFD800]"
-						: isDark
-							? "border border-[#333]"
-							: "border border-[#D4D4D4]"
-				} ${isDark ? "bg-[#262626]" : "bg-[#F5F5F5]"}`}
-				style={{ width: 36, height: 36 }}
+				className={`relative flex-none rounded-full overflow-hidden flex items-center justify-center ${
+					isDark ? "bg-[#222]" : "bg-[#EFEFEF]"
+				}`}
+				style={{
+					width: 30,
+					height: 30,
+					boxShadow: member.founder ? "0 0 0 1.5px #FFD800" : "none",
+				}}
 			>
 				{member.avatar ? (
 					<img
 						src={member.avatar}
 						alt={member.name}
-						style={{ width: 36, height: 36 }}
+						style={{ width: 30, height: 30 }}
 						className="object-cover"
 					/>
 				) : (
 					<span
-						className={`text-[11px] font-bold ${isDark ? "text-[#737373]" : "text-[#A3A3A3]"}`}
+						className={`text-[9.5px] font-bold tracking-tight ${isDark ? "text-[#666]" : "text-[#999]"}`}
 					>
 						{initials(member.name)}
 					</span>
 				)}
 			</div>
-			{member.country && (
-				<span className="absolute top-1 right-1 text-[10px] leading-none">
-					{FLAG[member.country]}
-				</span>
-			)}
-			<div className="min-w-0 text-left">
-				<div
-					className={`text-[13px] font-semibold leading-tight truncate ${isDark ? "text-white" : "text-[#0A0A0A]"}`}
-				>
-					{member.name}
+
+			<div className="min-w-0 flex-1 text-left">
+				<div className="flex items-center gap-1">
+					<span
+						className={`text-[12px] font-semibold leading-tight truncate ${isDark ? "text-white" : "text-[#0A0A0A]"}`}
+					>
+						{member.name}
+					</span>
+					{member.country && (
+						<span className="text-[9px] leading-none flex-none">
+							{FLAG[member.country]}
+						</span>
+					)}
 				</div>
 				<div
-					className={`text-[10px] leading-tight truncate mt-0.5 ${isDark ? "text-[#737373]" : "text-[#737373]"}`}
+					className={`text-[9.5px] leading-tight truncate ${isDark ? "text-[#6B6B6B]" : "text-[#8A8A8A]"}`}
 				>
 					{member.role}
 				</div>
-				{member.founder && (
-					<span
-						className={`inline-flex mt-1 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide ${
-							isDark ? "bg-[#FFD800] text-[#0A0A0A]" : "bg-[#0A0A0A] text-[#FFD800]"
-						}`}
-					>
-						Founder
-					</span>
-				)}
 			</div>
+
+			{member.founder && (
+				<span
+					title="Founder"
+					className="flex-none w-1.5 h-1.5 rounded-full bg-[#FFD800]"
+				/>
+			)}
 		</div>
 	);
 }
@@ -531,16 +529,50 @@ function Header({
 	);
 }
 
-function NavHint({ isDark }: { isDark: boolean }) {
+function Legend({ isDark }: { isDark: boolean }) {
+	const clusters = Object.keys(CLUSTER_LABEL) as Cluster[];
 	return (
 		<div
-			className={`fixed bottom-5 left-5 z-50 px-3 py-2 text-xs border ${
+			className={`fixed bottom-5 left-5 z-50 px-3.5 py-3 border ${
 				isDark
-					? "bg-[#171717] border-[#333] text-[#737373]"
-					: "bg-white border-[#D4D4D4] text-[#A3A3A3] shadow-sm"
+					? "bg-[#111]/90 border-[#2A2A2A] backdrop-blur"
+					: "bg-white/90 border-[#E5E5E5] shadow-sm backdrop-blur"
 			}`}
 		>
-			Arrastra para moverte · Scroll para zoom
+			<div className="flex flex-col gap-2">
+				{clusters.map((c) => (
+					<div key={c} className="flex items-center gap-2">
+						<span
+							className="w-2.5 h-2.5 flex-none"
+							style={{ backgroundColor: CLUSTER_COLOR[c] }}
+						/>
+						<span
+							className={`text-[11px] font-medium ${isDark ? "text-[#A3A3A3]" : "text-[#525252]"}`}
+						>
+							{CLUSTER_LABEL[c]}
+						</span>
+					</div>
+				))}
+			</div>
+			<div
+				className={`mt-2.5 pt-2.5 border-t flex items-center gap-2 ${
+					isDark ? "border-[#2A2A2A]" : "border-[#E5E5E5]"
+				}`}
+			>
+				<span className="w-1.5 h-1.5 rounded-full bg-[#FFD800] flex-none" />
+				<span
+					className={`text-[11px] font-medium ${isDark ? "text-[#A3A3A3]" : "text-[#525252]"}`}
+				>
+					Founder
+				</span>
+			</div>
+			<div
+				className={`mt-2 text-[10px] ${
+					isDark ? "text-[#5A5A5A]" : "text-[#A3A3A3]"
+				}`}
+			>
+				Arrastra para moverte · Scroll para zoom
+			</div>
 		</div>
 	);
 }
@@ -625,7 +657,7 @@ export function OrgChart() {
 			<Header isDark={isDark} />
 			<ThemeToggle isDark={isDark} onToggle={() => setIsDark(!isDark)} />
 			<BuiltWithBadge isDark={isDark} />
-			<NavHint isDark={isDark} />
+			<Legend isDark={isDark} />
 
 			{selectedMember && (
 				<ProfilePopover
@@ -641,19 +673,18 @@ export function OrgChart() {
 				gridSpacing={24}
 				minZoom={0.2}
 				maxZoom={2}
-				initialZoom={0.65}
+				initialZoom={0.78}
 			>
 				<HierarchyView<TeamMember>
 					data={team}
 					config={{ direction: "horizontal" }}
 					nodeSize={(node) => {
-						if (node.level === "org") return { width: 180, height: 75 };
-						if (node.level === "cluster") return { width: 200, height: 36 };
-						if (node.level === "area") return { width: 210, height: 58 };
-						return { width: 185, height: 62 };
+						if (node.level === "org") return { width: 180, height: 66 };
+						if (node.level === "area") return { width: 190, height: 50 };
+						return { width: 176, height: 46 };
 					}}
 					gap={{ x: 14, y: 40 }}
-					edgeColor={isDark ? "rgba(255, 216, 0, 0.5)" : "rgba(0, 0, 0, 0.25)"}
+					edgeColor={isDark ? "rgba(255, 255, 255, 0.13)" : "rgba(0, 0, 0, 0.14)"}
 					renderNode={(node) => (
 						<TeamNode
 							member={node}

@@ -1,9 +1,15 @@
-import type { TeamMember } from "../data/team";
+import {
+	CLUSTER_COLOR,
+	CLUSTER_LABEL,
+	type Cluster,
+	type TeamMember,
+} from "../data/team";
 
 const FLAG: Record<string, string> = {
 	PE: "🇵🇪",
 	CO: "🇨🇴",
 	CN: "🇨🇳",
+	BR: "🇧🇷",
 };
 
 function initials(name: string) {
@@ -70,14 +76,14 @@ function PersonRow({
 			}`}
 		>
 			<div
-				className={`relative shrink-0 overflow-hidden flex items-center justify-center ${
-					member.founder
-						? "border-2 border-[#FFD800]"
-						: isDark
-							? "border border-[#333]"
-							: "border border-[#D4D4D4]"
-				} ${isDark ? "bg-[#262626]" : "bg-[#F5F5F5]"}`}
-				style={{ width: 36, height: 36 }}
+				className={`relative shrink-0 rounded-full overflow-hidden flex items-center justify-center ${
+					isDark ? "bg-[#222]" : "bg-[#EFEFEF]"
+				}`}
+				style={{
+					width: 36,
+					height: 36,
+					boxShadow: member.founder ? "0 0 0 2px #FFD800" : "none",
+				}}
 			>
 				{member.avatar ? (
 					<img
@@ -132,17 +138,18 @@ function AreaBlock({
 	area,
 	isDark,
 	onSelect,
+	accent,
 }: {
 	area: TeamMember;
 	isDark: boolean;
 	onSelect: (m: TeamMember) => void;
+	accent: string;
 }) {
 	return (
 		<div className="mb-5">
 			<div
-				className={`border-l-2 border-[#FFD800] pl-2.5 mb-2 ${
-					isDark ? "" : ""
-				}`}
+				className="pl-2.5 mb-2"
+				style={{ borderLeft: `3px solid ${accent}` }}
 			>
 				<div
 					className={`text-sm font-bold ${isDark ? "text-white" : "text-[#0A0A0A]"}`}
@@ -180,13 +187,12 @@ export function OrgList({
 	isDark: boolean;
 	onSelect: (m: TeamMember) => void;
 }) {
-	const clusters = (team.children as TeamMember[] | undefined) ?? [];
+	const areas = (team.children as TeamMember[] | undefined) ?? [];
+	const order = Object.keys(CLUSTER_LABEL) as Cluster[];
 
 	return (
 		<div className="px-4 pt-24 pb-16 max-w-lg mx-auto">
-			<div
-				className={`mb-6 p-4 bg-[#FFD800] text-center`}
-			>
+			<div className="mb-6 p-4 bg-[#FFD800] text-center">
 				<div className="text-base font-black tracking-tight text-[#0A0A0A]">
 					CRAFTER STATION
 				</div>
@@ -195,27 +201,36 @@ export function OrgList({
 				</div>
 			</div>
 
-			{clusters.map((cluster) => (
-				<section key={cluster.id} className="mb-8">
-					<div
-						className={`mb-3 px-3 py-1.5 inline-flex text-[10px] font-bold uppercase tracking-widest border border-dashed ${
-							isDark
-								? "bg-[#FFD800]/[0.06] text-[#FFD800]/80 border-[#FFD800]/30"
-								: "bg-[#FFD800]/[0.08] text-[#996B00] border-[#996B00]/30"
-						}`}
-					>
-						{cluster.name}
-					</div>
-					{(cluster.children as TeamMember[] | undefined)?.map((area) => (
-						<AreaBlock
-							key={area.id}
-							area={area}
-							isDark={isDark}
-							onSelect={onSelect}
-						/>
-					))}
-				</section>
-			))}
+			{order.map((cluster) => {
+				const inCluster = areas.filter((a) => a.cluster === cluster);
+				if (!inCluster.length) return null;
+				return (
+					<section key={cluster} className="mb-8">
+						<div className="mb-3 flex items-center gap-2">
+							<span
+								className="w-2.5 h-2.5 flex-none"
+								style={{ backgroundColor: CLUSTER_COLOR[cluster] }}
+							/>
+							<span
+								className={`text-[10px] font-bold uppercase tracking-widest ${
+									isDark ? "text-[#A3A3A3]" : "text-[#525252]"
+								}`}
+							>
+								{CLUSTER_LABEL[cluster]}
+							</span>
+						</div>
+						{inCluster.map((area) => (
+							<AreaBlock
+								key={area.id}
+								area={area}
+								isDark={isDark}
+								onSelect={onSelect}
+								accent={CLUSTER_COLOR[cluster]}
+							/>
+						))}
+					</section>
+				);
+			})}
 		</div>
 	);
 }
